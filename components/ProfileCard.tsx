@@ -89,6 +89,12 @@ export default function ProfileCard({
   );
 
   useEffect(() => {
+    if (profile.avatarUrl) {
+      setLiveAvatar(profile.avatarUrl);
+    }
+  }, [profile.avatarUrl]);
+
+  useEffect(() => {
     const targetDiscordId = (profile as any).user?.discordId || (profile.username?.toLowerCase() === 'aliwasn1' ? '925438310418112592' : null);
     if (targetDiscordId) {
       fetch(`https://api.lanyard.rest/v1/users/${targetDiscordId}`)
@@ -101,7 +107,7 @@ export default function ProfileCard({
         })
         .catch(() => {});
     }
-  }, [profile.username, profile.avatarUrl]);
+  }, [profile.username]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-hidden font-sans">

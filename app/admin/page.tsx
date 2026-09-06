@@ -145,6 +145,36 @@ export default function AdminPage() {
     }
   };
 
+  const handleUnassignBadge = async (userId: string, badgeId: string) => {
+    if (!confirm('هل أنت متأكد من إزالة هذه الشارة عن المستخدم؟')) return;
+    try {
+      await fetch('/api/admin/badges', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unassign', userId, badgeId }),
+      });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleChangeRole = async (userId: string, role: string) => {
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role }),
+      });
+      if (res.ok) {
+        setUsers(users.map((u) => (u.id === userId ? { ...u, role } : u)));
+        alert('تم تحديث الرتبة بنجاح!');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleUpdateReport = async (reportId: string, status: string) => {
     try {
       const res = await fetch('/api/admin/reports', {
@@ -299,11 +329,18 @@ export default function AdminPage() {
                         <div className="text-zinc-500 text-[11px]">{u.email}</div>
                       </td>
                       <td className="p-3.5">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          u.role === 'ADMIN' ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-zinc-300'
-                        }`}>
-                          {u.role}
-                        </span>
+                        <select
+                          value={u.role}
+                          onChange={(e) => handleChangeRole(u.id, e.target.value)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+                            u.role === 'ADMIN'
+                              ? 'bg-red-500/20 text-red-400 border-red-500/40'
+                              : 'bg-white/5 text-zinc-300 border-white/10'
+                          }`}
+                        >
+                          <option value="USER" className="bg-zinc-900 text-white">👤 Member (عضو)</option>
+                          <option value="ADMIN" className="bg-zinc-900 text-red-400">👑 Admin / Staff (إدارة)</option>
+                        </select>
                       </td>
                       <td className="p-3.5">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -336,22 +373,48 @@ export default function AdminPage() {
                         </button>
                       </td>
                       <td className="p-3.5">
-                        <select
-                          onChange={(e) => {
-                            if (e.target.value) handleAssignBadge(u.id, e.target.value);
-                          }}
-                          defaultValue=""
-                          className="px-2 py-1 rounded bg-black/50 border border-white/10 text-white text-[11px]"
-                        >
-                          <option value="" disabled>
-                            + Award Badge
-                          </option>
-                          {badges.map((b) => (
-                            <option key={b.id} value={b.id} className="bg-zinc-900">
-                              {b.icon} {b.name}
+                        <div className="space-y-1.5">
+                          {/* List of currently assigned badges with delete button */}
+                          <div className="flex flex-wrap gap-1">
+                            {u.badges?.map((ub: any) => (
+                              <span
+                                key={ub.badge.id}
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/10 text-[10px] border border-white/10"
+                                style={{ color: ub.badge.color || '#fff' }}
+                              >
+                                <span>{ub.badge.icon}</span>
+                                <span>{ub.badge.name}</span>
+                                <button
+                                  onClick={() => handleUnassignBadge(u.id, ub.badge.id)}
+                                  title="إزالة الشارة"
+                                  className="text-zinc-400 hover:text-rose-400 ml-0.5 font-bold"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                          {/* Add badge selector */}
+                          <select
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                handleAssignBadge(u.id, e.target.value);
+                                e.target.value = '';
+                              }
+                            }}
+                            defaultValue=""
+                            className="px-2 py-1 rounded bg-black/50 border border-white/10 text-white text-[11px]"
+                          >
+                            <option value="" disabled>
+                              + Award Badge (إضافة شارة)
                             </option>
-                          ))}
-                        </select>
+                            {badges.map((b) => (
+                              <option key={b.id} value={b.id} className="bg-zinc-900">
+                                {b.icon} {b.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       </td>
                       <td className="p-3.5 text-right">
                         <button

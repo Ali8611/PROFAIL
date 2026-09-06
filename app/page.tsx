@@ -26,7 +26,7 @@ const DEMO_PROFILE: ProfileCardData = {
   bio: '👑 Founder & Lead Architect at WANS.\nConnecting next-generation cyber profiles & Discord identities.',
   location: 'Cyber City',
   pronouns: 'he/him',
-  avatarUrl: 'https://cdn.discordapp.com/avatars/925438310418112592/a_8f.png',
+  avatarUrl: 'https://cdn.discordapp.com/avatars/925438310418112592/1860ada08abd649208090ae5d5dddf55.png?size=256',
   backgroundType: 'GRADIENT',
   backgroundColor: '#0c071a',
   accentColor: '#00f0ff',
@@ -266,7 +266,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {[
-              { username: 'aliwasn1', role: '👑 Founder & Owner', badges: ['👑 Owner', '🛠 Dev', '💎 VIP', '✓ Verified'], color: '#00f0ff', avatar: 'https://cdn.discordapp.com/avatars/925438310418112592/a_8f.png' },
+              { username: 'aliwasn1', role: '👑 Founder & Owner', badges: ['👑 Owner', '🛠 Dev', '💎 VIP', '✓ Verified'], color: '#00f0ff', avatar: 'https://cdn.discordapp.com/avatars/925438310418112592/1860ada08abd649208090ae5d5dddf55.png?size=256' },
             ].map((p) => (
               <Link
                 key={p.username}

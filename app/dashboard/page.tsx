@@ -373,15 +373,15 @@ export default function DashboardPage() {
         {/* COLUMN 1: Navigation Sidebar */}
         <aside className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#0b0b14] p-4 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-x-visible">
           {[
-            { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-            { id: 'editor', label: 'Profile Editor', icon: User },
-            { id: 'links', label: 'Social Links', icon: Link2 },
-            { id: 'appearance', label: 'Appearance & Themes', icon: Palette },
-            { id: 'music', label: 'Music Player', icon: Music },
-            { id: 'badges', label: 'Badges', icon: Award },
-            { id: 'guestbook', label: 'Guestbook', icon: MessageSquare },
-            { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-            { id: 'account', label: 'Account Settings', icon: Settings },
+            { id: 'overview', label: '📊 نظرة عامة', icon: LayoutDashboard },
+            { id: 'editor', label: '👤 تعديل البروفايل', icon: User },
+            { id: 'links', label: '🔗 الروابط الاجتماعية', icon: Link2 },
+            { id: 'appearance', label: '🎨 المظهر والثيمات', icon: Palette },
+            { id: 'music', label: '🎵 مشغل الموسيقى', icon: Music },
+            { id: 'badges', label: '🏆 الشارات والبادجات', icon: Award },
+            { id: 'guestbook', label: '💬 سجل الزوار', icon: MessageSquare },
+            { id: 'analytics', label: '📈 التحليلات والزيارات', icon: BarChart3 },
+            { id: 'account', label: '⚙️ إعدادات الحساب', icon: Settings },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -406,11 +406,11 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-purple-400" />
                 <span className="text-xs font-bold text-white">
-                  {user.isPremium ? 'WANS VIP Member' : 'Free Plan'}
+                  {user.isPremium ? 'عضوية VIP مميزة 💎' : 'الحساب المجاني'}
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400">
-                {user.isPremium ? 'All features unlocked.' : 'Unlock video backgrounds, custom CSS and badges.'}
+                {user.isPremium ? 'جميع المميزات مفتوحة بدون أي قيود.' : 'قم بالترقية للحصول على ثيمات الفيديو والأكواد المخصصة.'}
               </p>
             </div>
           </div>

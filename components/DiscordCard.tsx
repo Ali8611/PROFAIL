@@ -15,8 +15,8 @@ export default function DiscordCard({
   discordId,
   username = 'aliwasn1',
   avatar,
-  status: initialStatus = 'online',
-  activity: initialActivity,
+  status: initialStatus = 'offline',
+  activity: initialActivity = null,
 }: DiscordCardProps) {
   const [liveData, setLiveData] = useState<{
     status: string;

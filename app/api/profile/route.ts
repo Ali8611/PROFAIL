@@ -20,13 +20,28 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    // Gated features check: non-premium users cannot use video backgrounds or custom css
+    // Gated features check: non-premium users cannot use video backgrounds, custom css, or premium themes
     if (!user.isPremium) {
       if (parsed.data.backgroundType === 'VIDEO') {
         return NextResponse.json(
-          { error: 'Video backgrounds require a WANS Premium subscription' },
+          { error: 'خاصية خلفيات الفيديو تتطلب اشتراك WANS Premium' },
           { status: 403 }
         );
+      }
+      if (parsed.data.customCss && parsed.data.customCss.trim().length > 0) {
+        return NextResponse.json(
+          { error: 'خاصية الأكواد المخصصة Custom CSS تتطلب اشتراك WANS Premium' },
+          { status: 403 }
+        );
+      }
+      if (parsed.data.themeId) {
+        const theme = await prisma.theme.findUnique({ where: { slug: parsed.data.themeId } });
+        if (theme?.isPremium) {
+          return NextResponse.json(
+            { error: 'هذا الثيم متاح فقط لمشتركي WANS Premium' },
+            { status: 403 }
+          );
+        }
       }
     }
 

@@ -39,19 +39,19 @@ export default function Navbar() {
         </Link>
 
         {/* Center links */}
-        <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-zinc-300">
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium text-zinc-300">
           <Link href="/explore" className="hover:text-cyan-400 transition-colors flex items-center gap-1.5">
             <Compass className="w-4 h-4" />
-            Explore
+            <span>استكشف</span>
           </Link>
           <Link href="/pricing" className="hover:text-purple-400 transition-colors flex items-center gap-1.5">
             <Sparkles className="w-4 h-4 text-purple-400" />
-            Premium
+            <span>المميز (VIP)</span>
           </Link>
           {user?.role === 'ADMIN' && (
-            <Link href="/admin" className="hover:text-red-400 text-red-400/90 transition-colors flex items-center gap-1.5 font-semibold">
+            <Link href="/admin" className="hover:text-red-400 text-red-400 transition-colors flex items-center gap-1.5 font-bold px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20">
               <Shield className="w-4 h-4 text-red-400" />
-              Admin
+              <span>الإدارة (Admin)</span>
             </Link>
           )}
         </nav>
@@ -62,20 +62,20 @@ export default function Navbar() {
             <div className="flex items-center space-x-3">
               <Link
                 href={`/${user.username}`}
-                className="hidden sm:inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-200 border border-white/10 transition-colors"
+                className="hidden sm:inline-flex items-center text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-cyan-300 border border-cyan-500/20 transition-colors font-mono"
               >
                 /{user.username}
               </Link>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-neon transition-all duration-200"
+                className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-neon transition-all duration-200"
               >
                 <LayoutDashboard className="w-4 h-4" />
-                <span>Dashboard</span>
+                <span>لوحة التحكم</span>
               </Link>
               <button
                 onClick={handleLogout}
-                title="Logout"
+                title="تسجيل الخروج"
                 className="p-2 rounded-xl bg-white/5 hover:bg-red-500/20 text-zinc-400 hover:text-red-400 border border-white/10 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
@@ -87,13 +87,13 @@ export default function Navbar() {
                 href="/login"
                 className="text-sm font-medium text-zinc-300 hover:text-white px-3 py-2 transition-colors"
               >
-                Login
+                دخول
               </Link>
               <Link
                 href="/register"
                 className="text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white shadow-neon-cyan transition-all duration-200"
               >
-                Create Profile
+                إنشاء حساب
               </Link>
             </div>
           )}
