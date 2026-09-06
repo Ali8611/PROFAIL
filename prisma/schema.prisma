@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String         @id @default(cuid())
+  username        String         @unique
+  email           String         @unique
+  passwordHash    String
+  role            String         @default("USER") // USER, ADMIN
+  isPremium       Boolean        @default(false)
+  isBanned        Boolean        @default(false)
+  discordId       String?        @unique
+  discordUsername String?
+  discordAvatar   String?
+  spotifyId       String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  profile         Profile?
+  badges          UserBadge[]
+  reports         Report[]       @relation("ReportedBy")
+}
+
+model Profile {
+  id                 String              @id @default(cuid())
+  userId             String              @unique
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName        String
+  bio                String              @default("")
+  location           String?             @default("")
+  pronouns           String?             @default("")
+  avatarUrl          String?             @default("")
+  bannerUrl          String?             @default("")
+  backgroundType     String              @default("COLOR") // COLOR, GRADIENT, IMAGE, VIDEO
+  backgroundUrl      String?             @default("")
+  backgroundColor    String              @default("#0a0a0f")
+  accentColor        String              @default("#9d4edd")
+  textColor          String              @default("#ffffff")
+  cardColor          String              @default("rgba(18, 18, 28, 0.75)")
+  backgroundBlur     Int                 @default(0)
+  overlayOpacity     Float               @default(0.4)
+  fontFamily         String              @default("Inter")
+  effectGlow         Boolean             @default(true)
+  effectFloat        Boolean             @default(false)
+  themeId            String?             @default("cyber")
+  customCss          String?             @default("")
+  isGuestbookEnabled Boolean             @default(true)
+  musicAutoplay      Boolean             @default(false)
+  musicLoop          Boolean             @default(true)
+  showSpotify        Boolean             @default(true)
+  showDiscord        Boolean             @default(true)
+  discordActivity    String?             @default("Playing GTA V")
+  spotifyTrack       String?             @default("Blinding Lights")
+  spotifyArtist      String?             @default("The Weeknd")
+  spotifyCover       String?             @default("https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop")
+  spotifyUrl         String?             @default("https://open.spotify.com")
+
+  links              SocialLink[]
+  guestbook          GuestbookComment[]
+  views              ProfileView[]
+  musicTrack         MusicTrack?
+  reports            Report[]            @relation("ReportedProfile")
+}
+
+model SocialLink {
+  id         String      @id @default(cuid())
+  profileId  String
+  profile    Profile     @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  platform   String
+  label      String
+  url        String
+  icon       String?     @default("")
+  style      String      @default("filled")
+  order      Int         @default(0)
+  isEnabled  Boolean     @default(true)
+  clickCount Int         @default(0)
+  clicks     LinkClick[]
+}
+
+model LinkClick {
+  id        String     @id @default(cuid())
+  linkId    String
+  link      SocialLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  timestamp DateTime   @default(now())
+  referrer  String?    @default("")
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  icon        String
+  description String
+  color       String      @default("#9d4edd")
+  isSystem    Boolean     @default(true)
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  isVisible Boolean  @default(true)
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model Theme {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  previewBg   String
+  cardBg      String
+  accentColor String
+  textColor   String
+  borderStyle String
+  isPremium   Boolean @default(false)
+}
+
+model MusicTrack {
+  id        String  @id @default(cuid())
+  profileId String  @unique
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  title     String
+  artist    String
+  audioUrl  String
+  coverUrl  String? @default("")
+  isHidden  Boolean @default(false)
+}
+
+model GuestbookComment {
+  id           String   @id @default(cuid())
+  profileId    String
+  profile      Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  authorName   String
+  authorAvatar String?  @default("")
+  message      String
+  isPinned     Boolean  @default(false)
+  ipHash       String?  @default("")
+  createdAt    DateTime @default(now())
+}
+
+model ProfileView {
+  id            String   @id @default(cuid())
+  profileId     String
+  profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  visitorIpHash String?  @default("")
+  userAgent     String?  @default("")
+  deviceType    String   @default("desktop")
+  browser       String   @default("Chrome")
+  referrer      String?  @default("Direct")
+  country       String?  @default("Global")
+  timestamp     DateTime @default(now())
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  targetType String   // PROFILE, COMMENT
+  targetId   String
+  reason     String   // Spam, Harassment, NSFW, Scam, Impersonation, Illegal, Other
+  details    String?  @default("")
+  status     String   @default("PENDING") // PENDING, RESOLVED, DISMISSED
+  reporterId String?
+  reporter   User?    @relation("ReportedBy", fields: [reporterId], references: [id], onDelete: SetNull)
+  profileId  String?
+  profile    Profile? @relation("ReportedProfile", fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
