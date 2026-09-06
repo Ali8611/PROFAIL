@@ -63,13 +63,58 @@ export default function HomePage() {
   const [activeTheme, setActiveTheme] = useState('cyan');
   const [demoState, setDemoState] = useState(DEMO_PROFILE);
 
+  React.useEffect(() => {
+    fetch('/api/profile/aliwasn1')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.profile) {
+          const p = data.profile;
+          setDemoState({
+            id: p.id,
+            userId: p.userId,
+            username: p.user?.username || 'aliwasn1',
+            displayName: p.displayName || p.user?.username || 'aliwasn1',
+            bio: p.bio || '',
+            location: p.location || '',
+            pronouns: p.pronouns || '',
+            avatarUrl: p.avatarUrl || p.user?.discordAvatar || '',
+            backgroundType: p.backgroundType || 'GRADIENT',
+            backgroundColor: p.backgroundColor || '#0c071a',
+            accentColor: p.accentColor || '#00f0ff',
+            textColor: p.textColor || '#ffffff',
+            cardColor: p.cardColor || 'rgba(18, 14, 32, 0.85)',
+            backgroundBlur: p.backgroundBlur ?? 4,
+            overlayOpacity: p.overlayOpacity ?? 0.4,
+            fontFamily: p.fontFamily || 'Inter',
+            effectGlow: p.effectGlow ?? true,
+            effectFloat: p.effectFloat ?? true,
+            themeId: p.themeId || 'cyber',
+            isGuestbookEnabled: false,
+            musicAutoplay: false,
+            musicLoop: true,
+            showSpotify: p.showSpotify ?? true,
+            showDiscord: p.showDiscord ?? true,
+            discordActivity: p.discordActivity,
+            spotifyTrack: p.spotifyTrack,
+            spotifyArtist: p.spotifyArtist,
+            spotifyCover: p.spotifyCover,
+            spotifyUrl: p.spotifyUrl,
+            badges: p.user?.badges?.map((ub: any) => ub.badge) || [],
+            links: p.links || [],
+            user: p.user,
+          } as any);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleThemeSwitch = (accent: string, bg: string, themeName: string) => {
     setActiveTheme(themeName);
-    setDemoState({
-      ...demoState,
+    setDemoState((prev) => ({
+      ...prev,
       accentColor: accent,
       backgroundColor: bg,
-    });
+    }));
   };
 
   return (
@@ -178,7 +223,23 @@ export default function HomePage() {
               />
             </div>
 
-            {/* Profile Mock Card */}
+            {/* Profile Live Card Header */}
+            <div className="w-full max-w-md flex items-center justify-between px-2 mb-2">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                <span className="font-semibold text-white">Live Profile:</span>
+                <span className="text-cyan-400 font-mono">/aliwasn1</span>
+              </div>
+              <Link
+                href="/aliwasn1"
+                className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors hover:underline"
+              >
+                <span>Visit Profile</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {/* Profile Live Card */}
             <div className="w-full max-w-md transform transition-all duration-500 hover:scale-[1.01]">
               <ProfileCard profile={demoState} isLivePreview={true} />
             </div>
