@@ -4,7 +4,8 @@
   "description": "WANS - Production-Ready Cyber & Gaming Personal Profile Platform",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "seed": "tsx prisma/seed.ts"
