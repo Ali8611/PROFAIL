@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   MapPin,
   Calendar,
@@ -71,6 +71,7 @@ export default function ProfileCard({
   isOwner = false,
   isLivePreview = false,
 }: ProfileCardProps) {
+  const [liveAvatar, setLiveAvatar] = useState<string | null>(profile.avatarUrl || null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
 
@@ -86,6 +87,21 @@ export default function ProfileCard({
   const isVerifiedBadge = profile.badges?.some(
     (b: any) => b.badge?.slug === 'verified' || b.slug === 'verified'
   );
+
+  useEffect(() => {
+    const targetDiscordId = (profile as any).user?.discordId || (profile.username?.toLowerCase() === 'aliwasn1' ? '925438310418112592' : null);
+    if (targetDiscordId) {
+      fetch(`https://api.lanyard.rest/v1/users/${targetDiscordId}`)
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.success && json.data?.discord_user?.avatar) {
+            const ext = json.data.discord_user.avatar.startsWith('a_') ? 'gif' : 'png';
+            setLiveAvatar(`https://cdn.discordapp.com/avatars/${targetDiscordId}/${json.data.discord_user.avatar}.${ext}?size=512`);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [profile.username, profile.avatarUrl]);
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-hidden font-sans">
@@ -174,9 +190,9 @@ export default function ProfileCard({
               }}
             >
               <div className="w-full h-full rounded-full overflow-hidden bg-black/60">
-                {profile.avatarUrl ? (
+                {liveAvatar || profile.avatarUrl ? (
                   <img
-                    src={profile.avatarUrl}
+                    src={liveAvatar || profile.avatarUrl!}
                     alt={profile.displayName}
                     className="w-full h-full object-cover"
                   />
@@ -293,8 +309,10 @@ export default function ProfileCard({
           )}
 
           {/* Spotify Widget */}
-          {profile.showSpotify && profile.spotifyTrack && (
+          {profile.showSpotify && (
             <SpotifyCard
+              discordId={(profile as any).user?.discordId || (profile.username?.toLowerCase() === 'aliwasn1' ? '925438310418112592' : null)}
+              username={profile.username}
               track={profile.spotifyTrack}
               artist={profile.spotifyArtist}
               cover={profile.spotifyCover}
@@ -305,8 +323,9 @@ export default function ProfileCard({
           {/* Discord Presence Widget */}
           {profile.showDiscord && (
             <DiscordCard
+              discordId={(profile as any).user?.discordId || (profile.username?.toLowerCase() === 'aliwasn1' ? '925438310418112592' : null)}
               username={profile.username}
-              avatar={profile.avatarUrl}
+              avatar={liveAvatar || profile.avatarUrl}
               activity={profile.discordActivity}
             />
           )}

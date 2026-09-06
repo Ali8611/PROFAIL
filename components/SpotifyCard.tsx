@@ -1,9 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 
 interface SpotifyCardProps {
+  discordId?: string | null;
+  username?: string | null;
   track?: string | null;
   artist?: string | null;
   cover?: string | null;
@@ -11,11 +13,48 @@ interface SpotifyCardProps {
 }
 
 export default function SpotifyCard({
-  track = 'Blinding Lights',
-  artist = 'The Weeknd',
-  cover = 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop',
-  url = 'https://open.spotify.com',
+  discordId,
+  username,
+  track: initialTrack,
+  artist: initialArtist,
+  cover: initialCover,
+  url: initialUrl,
 }: SpotifyCardProps) {
+  const [liveSpotify, setLiveSpotify] = useState<{
+    song: string;
+    artist: string;
+    album_art_url: string;
+    track_id?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const targetId = discordId || (username?.toLowerCase() === 'aliwasn1' ? '925438310418112592' : null);
+    if (targetId) {
+      fetch(`https://api.lanyard.rest/v1/users/${targetId}`)
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.success && json.data?.listening_to_spotify && json.data.spotify) {
+            setLiveSpotify(json.data.spotify);
+          } else {
+            setLiveSpotify(null);
+          }
+        })
+        .catch(() => setLiveSpotify(null));
+    }
+  }, [discordId, username]);
+
+  // If live spotify is active, use it! If not listening to anything, hide the card so no fake track appears
+  if (!liveSpotify && (!initialTrack || initialTrack === 'Resonance' || initialTrack === 'Blinding Lights')) {
+    return null;
+  }
+
+  const currentSong = liveSpotify ? liveSpotify.song : initialTrack;
+  const currentArtist = liveSpotify ? liveSpotify.artist : initialArtist;
+  const currentCover = liveSpotify ? liveSpotify.album_art_url : initialCover;
+  const currentUrl = liveSpotify?.track_id
+    ? `https://open.spotify.com/track/${liveSpotify.track_id}`
+    : initialUrl || 'https://open.spotify.com';
+
   return (
     <div className="w-full bg-[#121212]/90 backdrop-blur-md rounded-2xl border border-emerald-500/20 p-3.5 shadow-glass relative overflow-hidden transition-all duration-300 hover:border-emerald-500/40">
       {/* Spotify Green Accent Glow */}
@@ -26,8 +65,8 @@ export default function SpotifyCard({
           {/* Cover */}
           <div className="w-12 h-12 rounded-xl overflow-hidden bg-black/40 border border-white/10 flex-shrink-0 relative">
             <img
-              src={cover || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop'}
-              alt={track || 'Spotify Track'}
+              src={currentCover || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop'}
+              alt={currentSong || 'Spotify Track'}
               className="w-full h-full object-cover"
             />
           </div>
@@ -42,14 +81,14 @@ export default function SpotifyCard({
                 Listening to Spotify
               </span>
             </div>
-            <h4 className="text-xs font-bold text-white truncate">{track}</h4>
-            <p className="text-[11px] text-zinc-400 truncate">{artist}</p>
+            <h4 className="text-xs font-bold text-white truncate">{currentSong}</h4>
+            <p className="text-[11px] text-zinc-400 truncate">{currentArtist}</p>
           </div>
         </div>
 
         {/* Action button */}
         <a
-          href={url || 'https://open.spotify.com'}
+          href={currentUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg bg-[#1db954]/20 hover:bg-[#1db954]/30 text-emerald-400 border border-emerald-500/30 transition-all"
