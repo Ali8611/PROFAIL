@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Gamepad2 } from 'lucide-react';
+import { Gamepad2, Shield } from 'lucide-react';
 
 interface DiscordCardProps {
   discordId?: string | null;
@@ -18,59 +18,39 @@ export default function DiscordCard({
   status: initialStatus = 'offline',
   activity: initialActivity = null,
 }: DiscordCardProps) {
-  const [liveData, setLiveData] = useState<{
+  const [data, setData] = useState<{
     status: string;
     activity: string | null;
     avatarUrl: string | null;
     displayName: string;
+    serverName?: string;
   } | null>(null);
 
   useEffect(() => {
-    // If we have a discordId or default to aliwasn1's ID
     const targetId = discordId || (username?.toLowerCase() === 'aliwasn1' ? '925438310418112592' : null);
 
     if (targetId) {
-      // Fetch live presence from Lanyard API
-      fetch(`https://api.lanyard.rest/v1/users/${targetId}`)
+      fetch(`/api/discord/presence?userId=${targetId}`)
         .then((res) => res.json())
         .then((json) => {
           if (json.success && json.data) {
-            const data = json.data;
-            const discordUser = data.discord_user;
-            
-            // Build avatar URL
-            let liveAvatar = avatar;
-            if (discordUser?.avatar) {
-              const ext = discordUser.avatar.startsWith('a_') ? 'gif' : 'png';
-              liveAvatar = `https://cdn.discordapp.com/avatars/${targetId}/${discordUser.avatar}.${ext}?size=256`;
-            }
-
-            // Find current game or custom status activity
-            const currentActivity = data.activities?.find((a: any) => a.type === 0 || a.type === 4);
-            const activityText = currentActivity
-              ? currentActivity.type === 4
-                ? currentActivity.state
-                : currentActivity.name
-              : null;
-
-            setLiveData({
-              status: data.discord_status || 'offline',
-              activity: activityText,
-              avatarUrl: liveAvatar || null,
-              displayName: discordUser?.global_name || discordUser?.username || username || 'Discord User',
+            setData({
+              status: json.data.status || 'offline',
+              activity: json.data.activity || null,
+              avatarUrl: json.data.avatarUrl,
+              displayName: json.data.globalName || json.data.username || username || 'ALI WANS',
+              serverName: json.data.serverName,
             });
           }
         })
-        .catch(() => {
-          // Fallback to static
-        });
+        .catch(() => {});
     }
-  }, [discordId, username, avatar]);
+  }, [discordId, username]);
 
-  const currentStatus = liveData?.status || initialStatus;
-  const currentAvatar = liveData?.avatarUrl || avatar;
-  const currentActivity = liveData ? liveData.activity : initialActivity;
-  const currentName = liveData?.displayName || username || 'aliwasn1';
+  const currentStatus = data?.status || initialStatus;
+  const currentAvatar = data?.avatarUrl || avatar;
+  const currentActivity = data ? data.activity : initialActivity;
+  const currentName = data?.displayName || username || 'ALI WANS';
 
   const statusColor =
     currentStatus === 'online'
@@ -104,8 +84,9 @@ export default function DiscordCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-xs font-bold text-white truncate">{currentName}</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#5865F2]/30 text-[#8ea1ff] font-medium">
-                Discord
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#5865F2]/30 text-[#8ea1ff] font-medium flex items-center gap-0.5">
+                <Shield className="w-2.5 h-2.5" />
+                <span>𝓐𝓵 𝓦𝓐𝓝𝓢</span>
               </span>
             </div>
 
@@ -115,7 +96,9 @@ export default function DiscordCard({
                 <span className="truncate">{currentActivity}</span>
               </div>
             ) : (
-              <p className="text-[11px] text-zinc-400 capitalize">{currentStatus}</p>
+              <p className="text-[11px] text-zinc-400 capitalize flex items-center gap-1">
+                <span>{currentStatus === 'offline' ? 'غير متصل (Offline)' : currentStatus}</span>
+              </p>
             )}
           </div>
         </div>
