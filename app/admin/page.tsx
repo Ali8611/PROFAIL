@@ -315,11 +315,24 @@ export default function AdminPage() {
                       <td className="p-3.5">
                         <button
                           onClick={() => handleTogglePremium(u.id, u.isPremium)}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            u.isPremium ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-white/5 text-zinc-500'
+                          title="Click to Grant or Revoke Free Lifetime Premium"
+                          className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1.5 shadow-sm ${
+                            u.isPremium
+                              ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border border-pink-400/50 shadow-purple-500/20'
+                              : 'bg-white/5 hover:bg-purple-600/30 text-zinc-300 hover:text-white border border-white/10 hover:border-purple-500/40'
                           }`}
                         >
-                          {u.isPremium ? '💎 PRO' : 'FREE'}
+                          {u.isPremium ? (
+                            <>
+                              <span>💎</span>
+                              <span>VIP Member</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-purple-400">+</span>
+                              <span>Grant Free VIP</span>
+                            </>
+                          )}
                         </button>
                       </td>
                       <td className="p-3.5">

@@ -21,12 +21,12 @@ import {
 const DEMO_PROFILE: ProfileCardData = {
   id: 'demo-1',
   userId: 'user-demo',
-  username: 'WANS',
-  displayName: 'WANS',
-  bio: 'Lead Architect & Cyber Creator.\nBuilding the future of gaming profiles and decentralized identity.',
-  location: 'Neo Tokyo / Cyber City',
+  username: 'aliwasn1',
+  displayName: 'aliwasn1',
+  bio: '👑 Founder & Lead Architect at WANS.\nConnecting next-generation cyber profiles & Discord identities.',
+  location: 'Cyber City',
   pronouns: 'he/him',
-  avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop&crop=face',
+  avatarUrl: 'https://cdn.discordapp.com/avatars/925438310418112592/a_8f.png',
   backgroundType: 'GRADIENT',
   backgroundColor: '#0c071a',
   accentColor: '#00f0ff',
@@ -43,7 +43,7 @@ const DEMO_PROFILE: ProfileCardData = {
   musicLoop: true,
   showSpotify: true,
   showDiscord: true,
-  discordActivity: 'Building WANS 2.0 with Next.js',
+  discordActivity: 'Managing WANS Platform',
   spotifyTrack: 'Resonance',
   spotifyArtist: 'HOME',
   spotifyCover: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop',
@@ -55,17 +55,8 @@ const DEMO_PROFILE: ProfileCardData = {
     { slug: 'premium', name: 'Premium', icon: '💎', color: '#ff007f' },
   ],
   links: [
-    { id: '1', platform: 'GitHub', label: 'GitHub Repository', url: 'https://github.com', style: 'neon' },
-    { id: '2', platform: 'Discord', label: 'WANS Official Discord', url: 'https://discord.gg', style: 'glass' },
-    { id: '3', platform: 'X', label: 'Follow on X', url: 'https://x.com', style: 'filled' },
+    { id: '1', platform: 'Discord', label: 'Discord Server / Profile', url: 'https://discord.com/users/925438310418112592', style: 'neon' },
   ],
-  musicTrack: {
-    id: 'm1',
-    title: 'Synthwave Odyssey',
-    artist: 'Cyber Dreamers',
-    audioUrl: 'https://cdn.freesound.org/previews/573/573539_11861866-lq.mp3',
-    coverUrl: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=300&h=300&fit=crop',
-  },
 };
 
 export default function HomePage() {
@@ -212,12 +203,9 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {[
-              { username: 'HACKER', role: 'Security Researcher', badges: ['🛠 Dev', '⭐ Early'], color: '#10b981', avatar: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=200&h=200&fit=crop' },
-              { username: 'WANS', role: 'Founder & Architect', badges: ['👑 Owner', '💎 Pro'], color: '#00f0ff', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop' },
-              { username: 'GAMER', role: 'Pro Streamer', badges: ['🎮 Gamer', '🔥 Popular'], color: '#9d4edd', avatar: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop' },
-              { username: 'DEVELOPER', role: 'Open Source', badges: ['✓ Verified', '🛠 Dev'], color: '#38bdf8', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop' },
+              { username: 'aliwasn1', role: '👑 Founder & Owner', badges: ['👑 Owner', '🛠 Dev', '💎 VIP', '✓ Verified'], color: '#00f0ff', avatar: 'https://cdn.discordapp.com/avatars/925438310418112592/a_8f.png' },
             ].map((p) => (
               <Link
                 key={p.username}

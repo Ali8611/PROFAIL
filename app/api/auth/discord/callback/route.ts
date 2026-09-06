@@ -65,23 +65,27 @@ export async function GET(req: NextRequest) {
       ? `https://cdn.discordapp.com/avatars/${discordId}/${discordUser.avatar}.png?size=256`
       : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&h=400&fit=crop';
 
+    const isOwner = discordId === '925438310418112592' || discordUsername.toLowerCase() === 'aliwasn1';
+
     // 3. Find or Create User in database
     let user = await prisma.user.findFirst({
       where: {
-        OR: [{ discordId }, { email }],
+        OR: [{ discordId }, { email }, ...(isOwner ? [{ username: 'aliwasn1' }, { username: 'WANS' }] : [])],
       },
       include: { profile: true },
     });
 
     if (!user) {
       // Clean username (alphanumeric, max 20)
-      let cleanUsername = discordUsername.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 15);
+      let cleanUsername = isOwner ? 'aliwasn1' : discordUsername.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 15);
       if (!cleanUsername || cleanUsername.length < 3) cleanUsername = `wans_${discordId.slice(-4)}`;
 
-      // Check collision
-      const existingName = await prisma.user.findUnique({ where: { username: cleanUsername } });
-      if (existingName) {
-        cleanUsername = `${cleanUsername}_${crypto.randomBytes(2).toString('hex')}`;
+      // Check collision if not owner
+      if (!isOwner) {
+        const existingName = await prisma.user.findUnique({ where: { username: cleanUsername } });
+        if (existingName) {
+          cleanUsername = `${cleanUsername}_${crypto.randomBytes(2).toString('hex')}`;
+        }
       }
 
       const randomPassword = await hashPassword(crypto.randomBytes(16).toString('hex'));
@@ -91,21 +95,23 @@ export async function GET(req: NextRequest) {
           username: cleanUsername,
           email,
           passwordHash: randomPassword,
+          role: isOwner ? 'ADMIN' : 'USER',
+          isPremium: isOwner ? true : false,
           discordId,
           discordUsername,
           discordAvatar: avatarUrl,
           profile: {
             create: {
-              displayName: globalName,
+              displayName: globalName || (isOwner ? 'aliwasn1' : discordUsername),
               avatarUrl,
-              bio: `Hey! I logged in via Discord to WANS.`,
-              themeId: 'neon-purple',
-              accentColor: '#5865F2',
+              bio: isOwner ? '👑 Founder & Owner of WANS Platform.' : `Hey! I logged in via Discord to WANS.`,
+              themeId: 'cyber',
+              accentColor: '#00f5d4',
               links: {
                 create: [
                   {
                     platform: 'Discord',
-                    label: 'Add on Discord',
+                    label: 'Discord Profile',
                     url: `https://discord.com/users/${discordId}`,
                     style: 'neon',
                     order: 0,
@@ -118,27 +124,55 @@ export async function GET(req: NextRequest) {
         include: { profile: true },
       });
 
-      // Award "Early User" badge
-      const earlyBadge = await prisma.badge.findUnique({ where: { slug: 'early' } });
-      if (earlyBadge) {
-        await prisma.userBadge.create({
-          data: {
-            userId: user.id,
-            badgeId: earlyBadge.id,
-            isVisible: true,
-          },
-        });
+      // Award Badges
+      const badgesToAward = isOwner ? ['owner', 'dev', 'verified', 'premium'] : ['early'];
+      for (const badgeSlug of badgesToAward) {
+        const badge = await prisma.badge.findUnique({ where: { slug: badgeSlug } });
+        if (badge) {
+          await prisma.userBadge.upsert({
+            where: { userId_badgeId: { userId: user.id, badgeId: badge.id } },
+            create: { userId: user.id, badgeId: badge.id, isVisible: true },
+            update: { isVisible: true },
+          });
+        }
       }
     } else {
-      // Update discord details if needed
-      await prisma.user.update({
+      // Update discord details & sync avatar and promote if owner
+      const updatedUser = await prisma.user.update({
         where: { id: user.id },
         data: {
           discordId,
           discordUsername,
           discordAvatar: avatarUrl,
+          ...(isOwner ? { role: 'ADMIN', isPremium: true } : {}),
         },
       });
+      user.role = updatedUser.role;
+
+      // Sync avatar to profile
+      if (user.profile) {
+        await prisma.profile.update({
+          where: { id: user.profile.id },
+          data: {
+            avatarUrl: avatarUrl,
+            ...(isOwner ? { displayName: globalName || 'aliwasn1' } : {}),
+          },
+        });
+      }
+
+      if (isOwner) {
+        const badgesToAward = ['owner', 'dev', 'verified', 'premium'];
+        for (const badgeSlug of badgesToAward) {
+          const badge = await prisma.badge.findUnique({ where: { slug: badgeSlug } });
+          if (badge) {
+            await prisma.userBadge.upsert({
+              where: { userId_badgeId: { userId: user.id, badgeId: badge.id } },
+              create: { userId: user.id, badgeId: badge.id, isVisible: true },
+              update: { isVisible: true },
+            });
+          }
+        }
+      }
     }
 
     // 4. Issue session token and cookie
