@@ -9,6 +9,8 @@ import {
   QrCode,
   Flag,
   CheckCircle,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import SocialLinksList from './SocialLinksList';
 import MusicPlayer from './MusicPlayer';
@@ -17,6 +19,7 @@ import DiscordCard from './DiscordCard';
 import GuestbookSection from './GuestbookSection';
 import QrModal from './QrModal';
 import ReportModal from './ReportModal';
+import { getYouTubeId } from '@/lib/media-helpers';
 
 export interface ProfileCardData {
   id: string;
@@ -44,6 +47,7 @@ export interface ProfileCardData {
   isGuestbookEnabled: boolean;
   musicAutoplay: boolean;
   musicLoop: boolean;
+  isMusicHidden?: boolean;
   showSpotify: boolean;
   showDiscord: boolean;
   discordActivity?: string | null;
@@ -74,6 +78,114 @@ export default function ProfileCard({
   const [liveAvatar, setLiveAvatar] = useState<string | null>(profile.avatarUrl || null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+
+  // Background Audio / Video Sound state
+  const bgAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [isBgMusicPlaying, setIsBgMusicPlaying] = useState(false);
+  const [isYtBgUnmuted, setIsYtBgUnmuted] = useState(false);
+
+  const isHiddenMusic = Boolean(profile.musicTrack && (profile.musicTrack.isHidden || profile.isMusicHidden));
+  const musicAudioUrl = profile.musicTrack?.audioUrl;
+  const ytMusicId = musicAudioUrl ? getYouTubeId(musicAudioUrl) : null;
+  const ytBgId = profile.backgroundType === 'VIDEO' && profile.backgroundUrl ? getYouTubeId(profile.backgroundUrl) : null;
+
+  const hasSoundSource = Boolean((isHiddenMusic && musicAudioUrl) || ytBgId);
+  const isSoundActive = isBgMusicPlaying || isYtBgUnmuted;
+
+  const toggleSound = () => {
+    // 1. If direct audio
+    if (bgAudioRef.current) {
+      if (isBgMusicPlaying && !bgAudioRef.current.paused) {
+        bgAudioRef.current.pause();
+        setIsBgMusicPlaying(false);
+      } else {
+        bgAudioRef.current.play().then(() => setIsBgMusicPlaying(true)).catch(() => {});
+      }
+      return;
+    }
+
+    // 2. If hidden YouTube music
+    if (ytMusicId) {
+      const ytMusicIframe = document.getElementById('yt-hidden-music-iframe') as HTMLIFrameElement;
+      if (ytMusicIframe?.contentWindow) {
+        ytMusicIframe.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: isBgMusicPlaying ? 'pauseVideo' : 'playVideo',
+            args: [],
+          }),
+          '*'
+        );
+        setIsBgMusicPlaying(!isBgMusicPlaying);
+      }
+      return;
+    }
+
+    // 3. If background YouTube video
+    if (ytBgId) {
+      const ytBgIframe = document.getElementById('yt-bg-iframe') as HTMLIFrameElement;
+      if (ytBgIframe?.contentWindow) {
+        ytBgIframe.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func: isYtBgUnmuted ? 'mute' : 'unMute',
+            args: [],
+          }),
+          '*'
+        );
+        setIsYtBgUnmuted(!isYtBgUnmuted);
+      }
+    }
+  };
+
+  // Autoplay on visit with browser gesture fallback
+  useEffect(() => {
+    if (isLivePreview) return; // do not autoplay inside editor preview
+
+    // Direct audio track
+    if (isHiddenMusic && musicAudioUrl && !ytMusicId) {
+      const audio = bgAudioRef.current;
+      if (audio) {
+        audio.play().then(() => {
+          setIsBgMusicPlaying(true);
+        }).catch(() => {
+          const unblock = () => {
+            if (bgAudioRef.current) {
+              bgAudioRef.current.play().then(() => setIsBgMusicPlaying(true)).catch(() => {});
+            }
+            window.removeEventListener('click', unblock);
+            window.removeEventListener('touchstart', unblock);
+            window.removeEventListener('keydown', unblock);
+          };
+          window.addEventListener('click', unblock, { once: true });
+          window.addEventListener('touchstart', unblock, { once: true });
+          window.addEventListener('keydown', unblock, { once: true });
+        });
+      }
+    }
+
+    // Hidden YouTube music
+    if (isHiddenMusic && ytMusicId) {
+      const unblockYt = () => {
+        const ytMusicIframe = document.getElementById('yt-hidden-music-iframe') as HTMLIFrameElement;
+        if (ytMusicIframe?.contentWindow) {
+          ytMusicIframe.contentWindow.postMessage(
+            JSON.stringify({
+              event: 'command',
+              func: 'playVideo',
+              args: [],
+            }),
+            '*'
+          );
+          setIsBgMusicPlaying(true);
+        }
+        window.removeEventListener('click', unblockYt);
+        window.removeEventListener('touchstart', unblockYt);
+      };
+      window.addEventListener('click', unblockYt, { once: true });
+      window.addEventListener('touchstart', unblockYt, { once: true });
+    }
+  }, [isHiddenMusic, musicAudioUrl, ytMusicId, isLivePreview]);
 
   const profileUrl =
     typeof window !== 'undefined'
@@ -110,19 +222,47 @@ export default function ProfileCard({
   }, [profile.username]);
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-hidden font-sans">
+    <div
+      className={`relative ${
+        isLivePreview
+          ? 'min-h-[640px] rounded-3xl overflow-hidden border border-white/10'
+          : 'min-h-screen'
+      } w-full flex items-center justify-center p-4 sm:p-6 md:p-10 overflow-hidden font-sans`}
+    >
       {/* Background layer */}
-      <div className="fixed inset-0 pointer-events-none z-0">
+      <div className={`${isLivePreview ? 'absolute' : 'fixed'} inset-0 pointer-events-none z-0 overflow-hidden`}>
         {profile.backgroundType === 'VIDEO' && profile.backgroundUrl ? (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            src={profile.backgroundUrl}
-            className="w-full h-full object-cover"
-            style={{ filter: `blur(${profile.backgroundBlur || 0}px)` }}
-          />
+          (() => {
+            const ytId = getYouTubeId(profile.backgroundUrl);
+            if (ytId) {
+              return (
+                <div
+                  className="w-full h-full overflow-hidden pointer-events-none transition-all duration-700"
+                  style={{ filter: `blur(${profile.backgroundBlur || 0}px)` }}
+                >
+                  <iframe
+                    id="yt-bg-iframe"
+                    src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&mute=1&loop=1&playlist=${ytId}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+                    title="YouTube Background"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[180%] h-[180%] min-w-[180%] min-h-[180%] max-w-none pointer-events-none object-cover"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    style={{ border: 0 }}
+                  />
+                </div>
+              );
+            }
+            return (
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                src={profile.backgroundUrl}
+                className="w-full h-full object-cover"
+                style={{ filter: `blur(${profile.backgroundBlur || 0}px)` }}
+              />
+            );
+          })()
         ) : profile.backgroundType === 'IMAGE' && profile.backgroundUrl ? (
           <div
             className="w-full h-full bg-cover bg-center transition-all duration-700"
@@ -144,7 +284,7 @@ export default function ProfileCard({
 
         {/* Overlay opacity layer */}
         <div
-          className="absolute inset-0 bg-black"
+          className="absolute inset-0 bg-black pointer-events-none"
           style={{ opacity: profile.overlayOpacity ?? 0.4 }}
         />
       </div>
@@ -164,9 +304,22 @@ export default function ProfileCard({
           fontFamily: profile.fontFamily || 'Inter',
         }}
       >
-        {/* Top bar tools (QR & Report) */}
+        {/* Top bar tools (Sound, QR & Report) */}
         {!isLivePreview && (
           <div className="absolute top-4 right-4 flex items-center gap-1.5 z-20">
+            {hasSoundSource && (
+              <button
+                onClick={toggleSound}
+                title={isSoundActive ? 'كتم الصوت / Mute' : 'تشغيل الصوت / Unmute'}
+                className={`p-2 rounded-xl border transition-all ${
+                  isSoundActive
+                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-[0_0_12px_rgba(6,182,212,0.4)] animate-pulse'
+                    : 'bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border-white/10'
+                }`}
+              >
+                {isSoundActive ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+              </button>
+            )}
             <button
               onClick={() => setShowQrModal(true)}
               title="View QR Code"
@@ -302,7 +455,7 @@ export default function ProfileCard({
         {/* Dynamic Widgets Section */}
         <div className="mt-6 space-y-3">
           {/* Music Track */}
-          {profile.musicTrack && !profile.musicTrack.isHidden && (
+          {profile.musicTrack && !isHiddenMusic && (
             <MusicPlayer
               title={profile.musicTrack.title}
               artist={profile.musicTrack.artist}
@@ -371,6 +524,27 @@ export default function ProfileCard({
           </div>
         )}
       </div>
+
+      {/* Hidden audio element for direct audio playback */}
+      {isHiddenMusic && musicAudioUrl && !ytMusicId && (
+        <audio
+          ref={bgAudioRef}
+          src={musicAudioUrl}
+          loop={profile.musicLoop ?? true}
+          preload="auto"
+        />
+      )}
+
+      {/* Hidden YouTube iframe for YouTube audio track */}
+      {isHiddenMusic && ytMusicId && (
+        <iframe
+          id="yt-hidden-music-iframe"
+          src={`https://www.youtube-nocookie.com/embed/${ytMusicId}?autoplay=1&controls=0&playsinline=1&enablejsapi=1`}
+          title="Hidden YouTube Audio"
+          className="hidden pointer-events-none w-0 h-0 opacity-0"
+          allow="autoplay"
+        />
+      )}
 
       {/* Modals */}
       <QrModal

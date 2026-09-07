@@ -228,7 +228,7 @@ export default function DashboardPage() {
   const handleSaveMusic = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch('/api/profile/music', {
+      const res = await fetch('/api/profile/music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(musicState),
@@ -239,9 +239,12 @@ export default function DashboardPage() {
         musicAutoplay: musicState.autoplay,
         musicLoop: musicState.loop,
       });
-      alert('Music player updated!');
+      if (res.ok) {
+        alert('تم حفظ إعدادات الموسيقى بنجاح! ✅');
+      }
     } catch (err) {
       console.error(err);
+      alert('حدث خطأ أثناء حفظ الموسيقى');
     }
   };
 
@@ -326,6 +329,9 @@ export default function DashboardPage() {
     badges: badges.filter((b) => b.isVisible),
     links,
     musicTrack: musicState.audioUrl ? musicState : null,
+    isMusicHidden: musicState.isHidden,
+    musicAutoplay: musicState.autoplay,
+    musicLoop: musicState.loop,
     guestbook,
   };
 
@@ -916,12 +922,21 @@ export default function DashboardPage() {
                       </label>
                       <input
                         type="url"
-                        placeholder="Or enter direct media URL"
+                        placeholder={
+                          profile.backgroundType === 'VIDEO'
+                            ? 'YouTube URL (e.g. https://youtu.be/...) or direct MP4/WebM'
+                            : 'Or enter direct image URL'
+                        }
                         value={profile.backgroundUrl || ''}
                         onChange={(e) => setProfile({ ...profile, backgroundUrl: e.target.value })}
-                        className="flex-1 px-3 py-2 text-xs rounded-xl bg-black/40 border border-white/10 text-white"
+                        className="flex-1 px-3 py-2 text-xs rounded-xl bg-black/40 border border-white/10 text-white placeholder-zinc-500"
                       />
                     </div>
+                    {profile.backgroundType === 'VIDEO' && (
+                      <p className="text-[11px] text-zinc-400 pt-1">
+                        🎬 يدعم خلفيات فيديو يوتيوب المباشرة (مثل <span className="text-cyan-400">https://youtu.be/...</span>) أو ملفات الفيديو المرفوعة MP4.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1056,31 +1071,52 @@ export default function DashboardPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="flex items-center gap-2">
+                  {/* Music Options */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-start gap-3 p-3.5 rounded-xl bg-black/40 border border-white/10 hover:border-cyan-500/30 transition-colors">
                       <input
                         type="checkbox"
-                        id="autoplay-check"
-                        checked={musicState.autoplay}
-                        onChange={(e) => setMusicState({ ...musicState, autoplay: e.target.checked })}
-                        className="w-4 h-4 accent-cyan-400"
+                        id="hide-player-check"
+                        checked={musicState.isHidden}
+                        onChange={(e) => setMusicState({ ...musicState, isHidden: e.target.checked })}
+                        className="w-4 h-4 mt-0.5 accent-cyan-400 cursor-pointer"
                       />
-                      <label htmlFor="autoplay-check" className="text-xs text-white">
-                        Auto-play on visit
+                      <label htmlFor="hide-player-check" className="cursor-pointer">
+                        <span className="block text-xs font-bold text-white">
+                          إخفاء مشغل الموسيقى (تشغيل في الخلفية فقط)
+                        </span>
+                        <span className="block text-[11px] text-zinc-400 leading-normal mt-0.5">
+                          تشتغل الموسيقى تلقائياً في الخلفية عند زيارة البروفايل دون ظهور بطاقة المشغل، مع زر أنيق للتحكم بالصوت (كتم/تشغيل) في الزاوية العلوية.
+                        </span>
                       </label>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="loop-check"
-                        checked={musicState.loop}
-                        onChange={(e) => setMusicState({ ...musicState, loop: e.target.checked })}
-                        className="w-4 h-4 accent-cyan-400"
-                      />
-                      <label htmlFor="loop-check" className="text-xs text-white">
-                        Loop playback
-                      </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="autoplay-check"
+                          checked={musicState.autoplay}
+                          onChange={(e) => setMusicState({ ...musicState, autoplay: e.target.checked })}
+                          className="w-4 h-4 accent-cyan-400"
+                        />
+                        <label htmlFor="autoplay-check" className="text-xs text-white">
+                          تشغيل تلقائي (Auto-play)
+                        </label>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="loop-check"
+                          checked={musicState.loop}
+                          onChange={(e) => setMusicState({ ...musicState, loop: e.target.checked })}
+                          className="w-4 h-4 accent-cyan-400"
+                        />
+                        <label htmlFor="loop-check" className="text-xs text-white">
+                          تكرار التشغيل (Loop)
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
