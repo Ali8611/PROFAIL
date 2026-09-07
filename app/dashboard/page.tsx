@@ -138,7 +138,17 @@ export default function DashboardPage() {
     setSaving(true);
     setSaveStatus(null);
     try {
-      const payload = customPayload || profile;
+      const rawPayload = customPayload || profile;
+      // Sanitize null values to empty strings or defaults
+      const payload: any = {};
+      for (const [key, value] of Object.entries(rawPayload)) {
+        if (value === null) {
+          payload[key] = '';
+        } else {
+          payload[key] = value;
+        }
+      }
+
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -146,11 +156,11 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setSaveStatus({ text: data.error || 'Failed to save', error: true });
+        setSaveStatus({ text: data.error || 'فشل حفظ التعديلات', error: true });
       } else {
         setProfile(data.profile);
-        setSaveStatus({ text: 'Changes saved successfully!' });
-        setTimeout(() => setSaveStatus(null), 3000);
+        setSaveStatus({ text: 'تم حفظ التعديلات بنجاح! ✅' });
+        setTimeout(() => setSaveStatus(null), 3500);
       }
     } catch (err) {
       setSaveStatus({ text: 'Network error', error: true });
@@ -363,7 +373,7 @@ export default function DashboardPage() {
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold text-xs shadow-neon-cyan transition-transform hover:scale-105 disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+            <span>{saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}</span>
           </button>
         </div>
       </header>
